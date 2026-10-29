@@ -40,8 +40,8 @@ def parity(res, out):
     fig, axs = plt.subplots(1, 3, figsize=(11, 3.6))
     for ax, (k, kr, lab) in zip(axs, [('H', 'H', 'height H'), ('W_fus', 'W', 'width W'), ('D', 'D', 'depth D')]):
         q = d[d.qc_pass]
-        ax.scatter(d[f'{kr}_ref'], d[k], s=4, c='#bbb', label='classical, all segmented')
-        ax.scatter(q[f'{kr}_ref'], q[k], s=5, c='C0', label='classical, QC-pass')
+        ax.scatter(d[f'{kr}_ref'], d[k], s=4, c='#bbb', label='rule-based, all segmented')
+        ax.scatter(q[f'{kr}_ref'], q[k], s=5, c='C0', label='rule-based, accepted')
         uu = u[u.set == 'qc_fail']
         ok = ((uu.H_unet - uu.H_ref).abs() < .1) & ((uu.W_unet - uu.W_ref).abs() < .1) & ((uu.D_unet - uu.D_ref).abs() < .1)
         ax.scatter(uu[ok][f'{kr}_ref'], uu[ok][f'{kr}_unet'], s=5, c='C2', label='U-Net, recovered')
@@ -49,7 +49,7 @@ def parity(res, out):
         ax.plot(lim, lim, 'k-', lw=.8); ax.plot(lim, [l + .1 for l in lim], 'k:', lw=.6); ax.plot(lim, [l - .1 for l in lim], 'k:', lw=.6)
         ax.set_xlim(lim); ax.set_ylim(lim); ax.set_xlabel(f'expert {lab} (mm)'); ax.set_ylabel(f'automatic {lab} (mm)')
         e = (q[k] - q[f'{kr}_ref']).abs()
-        ax.set_title(f'{lab}: QC-pass MAE {e.mean()*1000:.0f} µm (n={len(q)})')
+        ax.set_title(f'{lab}: accepted MAE {e.mean()*1000:.0f} µm (n={len(q)})')
     axs[0].legend(fontsize=7, markerscale=2)
     fig.tight_layout(); fig.savefig(os.path.join(out, 'fig3_parity.png'), dpi=180); plt.close(fig)
 
