@@ -11,7 +11,8 @@ This repository contains a pipeline that
    clad area `A_d`, remelt area `A_s` and dilution `A_s / (A_d + A_s)`;
 2. **checks every automatic measurement against expert measurements** and uses only the sections that agree
    as training labels for a **U-Net**;
-3. **learns process-to-geometry models** (Gaussian process regression, random forest, physics power law)
+3. **learns process-to-geometry models** (Gaussian process regression, random forest, log-linear regression
+   on physically motivated inputs)
    and evaluates them on **unseen settings** and under **extrapolation in laser power**, not only on random
    splits;
 4. tests **few-shot transfer** of both the segmentation network and the process model to a new domain;
@@ -25,13 +26,13 @@ micrographs of Inconel 718 on SS304.
 | Result | Value |
 |---|---|
 | Rule-based segmentation, 393 expert-agreeing sections | MAE `H` 33 µm, `W` 39 µm, `D` 31 µm |
-| Self-trained U-Net | same accuracy on unseen tracks; recovers 301 sections the rules missed |
+| Self-trained U-Net | within ~10 µm of the rule-based accuracy on unseen tracks; recovers 301 sections the rules missed |
 | Sections with validated area and dilution labels | 694 |
-| Measured shape factors | `A_d = 0.80 W H`, `A_s = 0.72 W D` |
+| Measured shape factors | `A_d = 0.80 W H`, `A_s = 0.71 W D` |
 | Depth model, R² random split / unseen settings / higher power | GPR 0.93 / 0.83 / 0.85, random forest 0.94 / 0.87 / 0.49 |
-| Process-model transfer (residual GPR) | 0–3 target conditions match a from-scratch model trained on ~12 |
+| Process-model transfer (residual GPR) | with 0–3 target conditions, depth is predicted better than by a from-scratch model trained on 12 |
 | U-Net transfer to laser-wire IN718 (7 images) | clad IoU 0.42 → 0.93, dilution error 1.8 points |
-| Coaxial camera | improves `H`, `W`; no information on `D` |
+| Coaxial camera | improves `H`, `W`; adds no information on `D` beyond the process settings |
 
 ## Data
 
@@ -109,7 +110,7 @@ python -I pipeline/coaxial_examples.py . figs/fig_coaxial_examples.png
 | `segment_optomec.py` | rule-based 316L segmentation (Otsu, RANSAC surface line, superellipse fit, dynamic-programming fusion line), expert-agreement QC, masks, overlays |
 | `segment_wire.py` | three-phase segmentation of laser-wire IN718/SS304 micrographs |
 | `unet_seg.py` | U-Net training on validated masks and evaluation against the experts |
-| `process_model.py` | GPR / random forest / power-law models; random, grouped and extrapolation validation |
+| `process_model.py` | GPR / random forest / log-linear models; random, grouped and extrapolation validation |
 | `transfer_process.py` | few-shot process-model transfer (source only, scratch, recalibration, Δ-learning) |
 | `unet_transfer.py`, `wire_unet_transfer.py` | few-shot U-Net transfer (dark → bright mount; powder 316L → laser-wire IN718) |
 | `coaxial_features.py`, `coaxial_value.py` | coaxial frame features, frame-to-section registration, value of the camera |

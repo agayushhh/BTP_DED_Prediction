@@ -64,7 +64,9 @@ def models():
     return {
         'GPR': lambda: make_pipeline(StandardScaler(), GaussianProcessRegressor(k, normalize_y=True, n_restarts_optimizer=0, random_state=0)),
         'RF': lambda: RandomForestRegressor(300, min_samples_leaf=3, random_state=0, n_jobs=-1),
-        'PowerLaw': lambda: make_pipeline(StandardScaler(), LinearRegression()),  # linear in logs = power law
+        # log-linear: y = c0 + a ln El + b ln Af + e ln P (target not logged; a true power law, fitted to ln y,
+        # extrapolates far worse here). Key kept as 'PowerLaw' for compatibility with saved results.
+        'PowerLaw': lambda: make_pipeline(StandardScaler(), LinearRegression()),
     }
 
 

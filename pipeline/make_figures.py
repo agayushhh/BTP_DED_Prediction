@@ -18,7 +18,7 @@ def pipeline_diagram(out):
         (.25, .62, 'Rule-based segmentation\nthree-phase / fusion-line DP\n+ expert QC'),
         (.25, .12, 'Self-trained U-Net\n(validated masks as labels)'),
         (.50, .62, 'Geometry labels\nH, W, D, A_d, A_s, dilution\nshape factors'),
-        (.50, .12, 'Process models\nGPR / RF / power law\nphysics features'),
+        (.50, .12, 'Process models\nGPR / RF / log-linear\nphysically motivated inputs'),
         (.75, .62, 'Few-shot transfer\nimage: fine-tune U-Net\nprocess: Δ-GPR residual'),
         (.75, .12, 'Leakage-free validation\nunseen settings,\nextrapolation in power'),
     ]
@@ -62,7 +62,7 @@ def leakage(res, out):
     for i, (sp, c, lab) in enumerate([('random', '#bbb', 'random split (leaky)'), ('condition', 'C0', 'unseen settings'), ('extrap_P', 'C3', 'higher power (extrapolation)')]):
         v = [r[(r.target == t) & (r.features == f) & (r.model == m) & (r.split == sp)].R2.iloc[0] for t, f, m in pick]
         ax.bar(x + (i - 1) * w, v, w, color=c, label=lab)
-    ax.set_xticks(x, [f'{t if t != "dil" else "D/(H+D)"}\n{m} ({f})' for t, f, m in pick])
+    ax.set_xticks(x, [f'{t if t != "dil" else "D/(H+D)"}\n{ {"PowerLaw": "Log-linear"}.get(m, m)} ({f})' for t, f, m in pick])
     ax.set_ylabel('R²'); ax.set_ylim(0, 1); ax.legend(fontsize=7, ncol=3, loc='lower right')
     ax.set_title('Same models, three validation protocols: random splits overstate accuracy')
     fig.tight_layout(); fig.savefig(os.path.join(out, 'fig4_leakage.png'), dpi=180); plt.close(fig)
