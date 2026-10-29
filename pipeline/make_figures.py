@@ -15,7 +15,7 @@ def pipeline_diagram(out):
     boxes = [
         (0.0, .62, 'Public powder-DED data (316L)\n1947 sections, 1519 micrographs,\n243 coaxial videos'),
         (0.0, .12, 'Laser-wire DED data\n(IN718 wire on SS304)'),
-        (.25, .62, 'Classical segmentation\nthree-phase / fusion-line DP\n+ expert QC'),
+        (.25, .62, 'Rule-based segmentation\nthree-phase / fusion-line DP\n+ expert QC'),
         (.25, .12, 'Self-trained U-Net\n(validated masks as labels)'),
         (.50, .62, 'Geometry labels\nH, W, D, A_d, A_s, dilution\nshape factors'),
         (.50, .12, 'Process models\nGPR / RF / power law\nphysics features'),
@@ -25,7 +25,7 @@ def pipeline_diagram(out):
     for x, y, t in boxes:
         ax.add_patch(FancyBboxPatch((x, y), .21, .28, boxstyle='round,pad=0.01', fc='#eef2f7', ec='#34495e'))
         ax.text(x + .105, y + .14, t, ha='center', va='center', fontsize=8)
-    arr = [((.21, .76), (.25, .76)), ((.355, .62), (.355, .40)), ((.46, .76), (.50, .76)), ((.46, .26), (.50, .40)),
+    arr = [((.21, .76), (.25, .76)), ((.355, .62), (.355, .40)), ((.46, .76), (.50, .76)), ((.46, .26), (.50, .26)),
            ((.605, .62), (.605, .40)), ((.71, .76), (.75, .76)), ((.71, .26), (.75, .26)), ((.855, .62), (.855, .40)),
            ((.21, .26), (.25, .26))]
     for a, b in arr:
