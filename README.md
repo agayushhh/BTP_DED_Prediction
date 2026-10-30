@@ -80,6 +80,7 @@ python pipeline/unet_seg.py data/optomec/micro_tif results/optomec_seg results/u
 
 # 4. process-to-geometry models under three validation protocols
 python -I pipeline/process_model.py data/optomec/Final_total_measurement.xlsx results/optomec
+python -I pipeline/dilution_targets.py results    # after step 3: needs the U-Net evaluation
 
 # 5. few-shot transfer
 python pipeline/transfer_process.py results/optomec/optomec_sections_mm.csv results/transfer_learning
@@ -111,6 +112,7 @@ python -I pipeline/coaxial_examples.py . figs/fig_coaxial_examples.png
 | `segment_wire.py` | three-phase segmentation of laser-wire IN718/SS304 micrographs |
 | `unet_seg.py` | U-Net training on validated masks and evaluation against the experts |
 | `process_model.py` | GPR / random forest / log-linear models; random, grouped and extrapolation validation |
+| `dilution_targets.py` | the same models for segmented area dilution, length proxy `D/(H+D)` and shape-factor estimate |
 | `transfer_process.py` | few-shot process-model transfer (source only, scratch, recalibration, Δ-learning) |
 | `unet_transfer.py`, `wire_unet_transfer.py` | few-shot U-Net transfer (dark → bright mount; powder 316L → laser-wire IN718) |
 | `coaxial_features.py`, `coaxial_value.py` | coaxial frame features, frame-to-section registration, value of the camera |
