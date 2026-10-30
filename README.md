@@ -28,7 +28,7 @@ micrographs of Inconel 718 on SS304.
 | Rule-based segmentation, 393 expert-agreeing sections | MAE `H` 33 µm, `W` 39 µm, `D` 31 µm |
 | Self-trained U-Net | within ~10 µm of the rule-based accuracy on unseen tracks; recovers 301 sections the rules missed |
 | Sections with validated area and dilution labels | 694 |
-| Measured shape factors | `A_d = 0.80 W H`, `A_s = 0.71 W D` |
+| Length proxy `D/(H+D)` vs segmented area dilution | r = 0.95, reads 3.8 points high on average |
 | Depth model, R² random split / unseen settings / higher power | GPR 0.93 / 0.83 / 0.85, random forest 0.94 / 0.87 / 0.49 |
 | Process-model transfer (residual GPR) | with 0–3 target conditions, depth is predicted better than by a from-scratch model trained on 12 |
 | U-Net transfer to laser-wire IN718 (7 images) | clad IoU 0.42 → 0.93, dilution error 1.8 points |
@@ -83,7 +83,7 @@ python -I pipeline/process_model.py data/optomec/Final_total_measurement.xlsx re
 python -I pipeline/dilution_targets.py results    # after step 3: needs the U-Net evaluation
 
 # 5. few-shot transfer
-python pipeline/transfer_process.py results/optomec/optomec_sections_mm.csv results/transfer_learning
+python pipeline/transfer_process.py results/optomec/optomec_sections_mm.csv results/transfer_learning results
 python pipeline/unet_transfer.py data/optomec/micro_tif results/optomec_seg results/transfer_learning
 
 # 6. coaxial camera
@@ -112,7 +112,7 @@ python -I pipeline/coaxial_examples.py . figs/fig_coaxial_examples.png
 | `segment_wire.py` | three-phase segmentation of laser-wire IN718/SS304 micrographs |
 | `unet_seg.py` | U-Net training on validated masks and evaluation against the experts |
 | `process_model.py` | GPR / random forest / log-linear models; random, grouped and extrapolation validation |
-| `dilution_targets.py` | the same models for segmented area dilution, length proxy `D/(H+D)` and shape-factor estimate |
+| `dilution_targets.py` | the same models for the segmented area dilution of the validated sections |
 | `transfer_process.py` | few-shot process-model transfer (source only, scratch, recalibration, Δ-learning) |
 | `unet_transfer.py`, `wire_unet_transfer.py` | few-shot U-Net transfer (dark → bright mount; powder 316L → laser-wire IN718) |
 | `coaxial_features.py`, `coaxial_value.py` | coaxial frame features, frame-to-section registration, value of the camera |

@@ -7,11 +7,13 @@ Source: all sections with P <= 400 W. Target: P >= 450 W (24 conditions). A "tar
   recal      : source prediction recalibrated, y = a*f + b (bias only if k < 3)
   delta      : source prediction + GPR fitted on the k residuals (prior mean 0 -> falls back to source)
 Test on all sections of the remaining (unseen) target conditions; 30 random draws per k.
-Targets: H, W, D, area dilution (shape factors from segmentation).
-Usage: python transfer_process.py <sections_mm.csv> <out_dir>
+Targets: H, W, D (all sections) and the segmented area dilution (validated sections only).
+Usage: python transfer_process.py <sections_mm.csv> <out_dir> <results_dir>
 """
 import sys, os
 import numpy as np, pandas as pd
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dilution_targets import area_dilution
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -22,7 +24,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_absolute_error, r2_score
 
 FEATS = ['logEl', 'logAf', 'logP']
-KD, KS = 0.803, 0.715  # measured shape factors (393 QC-pass sections)
 KS_LIST = [0, 1, 2, 3, 5, 8, 12]
 REPS = 30
 
@@ -32,15 +33,18 @@ def gpr(n_restarts=0):
     return make_pipeline(StandardScaler(), GaussianProcessRegressor(k, normalize_y=True, n_restarts_optimizer=n_restarts, random_state=0))
 
 
-def main(sec_csv, out):
+def main(sec_csv, out, res):
     os.makedirs(out, exist_ok=True)
     d = pd.read_csv(sec_csv)
     d['logEl'], d['logAf'], d['logP'] = np.log(d.El), np.log(d.Af), np.log(d.P)
-    d['dil_area'] = KS * d.D / (KD * d.H + KS * d.D)
-    src, tgt = d[d.P <= 400], d[d.P >= 450]
-    conds = tgt.cond.unique()
+    d['key'] = d.id + d.sec
+    d = d.merge(area_dilution(res).rename(columns={'dilution': 'dil_area'}), on='key', how='left')
     rows = []
     for t in ['H', 'W', 'D', 'dil_area']:
+        dt = d[d[t].notna()]  # area dilution exists only for the validated sections
+        src, tgt = dt[dt.P <= 400], dt[dt.P >= 450]
+        conds = tgt.cond.unique()
+        print(t, len(src), 'source sections,', len(conds), 'target conditions', flush=True)
         s = src.sample(min(800, len(src)), random_state=0)
         f_src = gpr(2).fit(s[FEATS].values, s[t].values)
         tgt_pred = pd.Series(f_src.predict(tgt[FEATS].values), index=tgt.index)
@@ -89,4 +93,4 @@ def main(sec_csv, out):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])
