@@ -48,22 +48,12 @@ def main(panels, weights, out):
     s = r.groupby('method')[['IoU_clad', 'IoU_remelt', 'dil_err']].mean().round(3)
     s.to_csv(os.path.join(out, 'wire_unet_transfer_summary.csv'))
     print(s.to_string())
-
-    show = [k for k in ['900_750', '1100_600', '1100_750'] if k in keys]
-    tiles = []
-    for k in show:
-        row = []
-        g = cv2.normalize(X[k], None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        for name in ['label', 'zero-shot', 'fine-tuned (7 panels)', 'scratch (7 panels)']:
-            m = Y[k] if name == 'label' else preds[(k, name)]
-            ov = cv2.cvtColor(g, cv2.COLOR_GRAY2BGR)
-            for c, col in ((1, (0, 220, 0)), (2, (0, 0, 255))):
-                cs, _ = cv2.findContours((m == c).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-                cv2.drawContours(ov, cs, -1, col, 2)
-            cv2.putText(ov, f'{k} {name}', (5, 16), 0, .45, (255, 255, 255), 1)
-            row.append(ov)
-        tiles.append(np.hstack(row))
-    cv2.imwrite(os.path.join(out, 'wire_unet_transfer.png'), np.vstack(tiles))
+    # masks for the report figure (make_figures.wire_unet_plot)
+    z = {f'{k}|{n}': m for (k, n), m in preds.items()}
+    for k in keys:
+        z[f'{k}|img'] = cv2.normalize(X[k], None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        z[f'{k}|label'] = Y[k].astype(np.uint8)
+    np.savez_compressed(os.path.join(out, 'wire_unet_preds.npz'), **z)
 
 
 if __name__ == '__main__':

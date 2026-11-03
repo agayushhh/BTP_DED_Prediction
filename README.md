@@ -1,4 +1,4 @@
-# Measuring and Predicting Penetration and Dilution in Directed Energy Deposition
+# Measurement and Prediction of Penetration and Dilution in Directed Energy Deposition
 
 Code for the B.Tech project of Ayush Agarwal (Department of Mechanical Engineering, IIT Guwahati),
 supervised by Prof. S. N. Joshi.
@@ -94,7 +94,7 @@ python pipeline/coaxial_value.py results/optomec/optomec_sections_mm.csv results
 python -I pipeline/segment_wire.py <panel_grid.png> results/wire
 python pipeline/wire_unet_transfer.py results/wire/panels results/unet/unet.pt results/transfer_learning
 
-# 8. figures
+# 8. figures (after steps 2-7; the laser-wire figures need the masks saved by wire_unet_transfer.py)
 python pipeline/make_figures.py results figs
 python -I pipeline/report_extra_figs.py . figs
 python -I pipeline/explain_superellipse.py . figs/fig_seg_steps.png --en
@@ -116,13 +116,13 @@ python -I pipeline/coaxial_examples.py . figs/fig_coaxial_examples.png
 | `transfer_process.py` | few-shot process-model transfer (source only, scratch, recalibration, Δ-learning) |
 | `unet_transfer.py`, `wire_unet_transfer.py` | few-shot U-Net transfer (dark → bright mount; powder 316L → laser-wire IN718) |
 | `coaxial_features.py`, `coaxial_value.py` | coaxial frame features, frame-to-section registration, value of the camera |
-| `make_figures.py`, `report_extra_figs.py`, `explain_superellipse.py`, `explain_dp.py`, `unet_transfer_examples.py`, `coaxial_examples.py` | figures of the report |
+| `make_figures.py`, `report_extra_figs.py`, `explain_superellipse.py`, `explain_dp.py`, `unet_transfer_examples.py`, `coaxial_examples.py` | figures of the report (shared style and mask overlays in `figstyle.py`) |
 
 ## Citation
 
 If you use this code, please cite the B.Tech project report:
 
-> A. Agarwal, "Measuring and Predicting Penetration and Dilution in Directed Energy Deposition",
+> A. Agarwal, "Measurement and Prediction of Penetration and Dilution in Directed Energy Deposition",
 > B.Tech Project Report, Department of Mechanical Engineering, Indian Institute of Technology Guwahati, 2026.
 
 and the dataset paper above.

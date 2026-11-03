@@ -98,39 +98,39 @@ T = dict(  # (English, Hinglish)
 )
 L = {k: v[0] if EN else v[1] for k, v in T.items()}
 
-fig = plt.figure(figsize=(15, 9.5))
-gsp = fig.add_gridspec(2, 3, height_ratios=[1, 1])
+from figstyle import plt, FULL  # noqa: E402  (report style)
+
+fig = plt.figure(figsize=(FULL, 7.0))
+gsp = fig.add_gridspec(2, 3, height_ratios=[1.15, 1])
 crop = lambda ax: (ax.set_xlim(xc - 1.6 * c['a'], xc + 1.6 * c['a']), ax.set_ylim(yc + 1.6 * c['D'], yc - 1.3 * c['D']))
 
 ax = fig.add_subplot(gsp[0, 0]); ax.imshow(g0, cmap='gray')
 ax.axhline(yc, color='c', lw=1)
 x0, y0 = xy(R[:, :1], th, xc, yc, np.zeros(len(th), int)); x1, y1 = xy(R[:, -1:], th, xc, yc, np.zeros(len(th), int))
 for i in range(0, len(th), 6):
-    ax.plot([x0[i], x1[i]], [y0[i], y1[i]], color='orange', lw=0.8)
-mx, my = xy(R, th, xc, yc, mid); ax.plot(mx, my, 'w--', lw=1.2)
+    ax.plot([x0[i], x1[i]], [y0[i], y1[i]], color='orange', lw=1)
+mx, my = xy(R, th, xc, yc, mid); ax.plot(mx, my, 'w--', lw=1.5)
 ax.plot(xc, yc, 'yo')
 crop(ax); ax.axis('off')
-ax.set_title(L['t1'], fontsize=10)
+ax.set_title('(a) Rays and\ncandidate radii' if EN else '1) Rays aur\ncandidates', fontsize=10.5)
 
-ax = fig.add_subplot(gsp[0, 1:])
+for k, (path, col, name) in enumerate([(greedy, 'y', 'Greedy'), (dp, 'c', 'Dynamic\nprogramming' if EN else 'DP / Viterbi')]):
+    ax = fig.add_subplot(gsp[0, 1 + k]); ax.imshow(g0, cmap='gray'); ax.axhline(yc, color='c', lw=0.8, alpha=0.5)
+    px, py = xy(R, th, xc, yc, path); ax.plot(px, py, color=col, lw=2)
+    crop(ax); ax.axis('off')
+    ax.set_title(f'({"bc"[k]}) {name}', fontsize=10.5)
+    ax.set_xlabel(f'$D$ = {depth_mm(px, py, line, w):.2f} mm', fontsize=10.5); ax.axis('on')
+    ax.set_xticks([]); ax.set_yticks([]); [s.set_visible(False) for s in ax.spines.values()]
+
+ax = fig.add_subplot(gsp[1, :])
 pm = np.where(pen < -1e5, np.nan, pen)
 im = ax.imshow(np.clip(pm.T, np.nanpercentile(pm, 2), np.nanpercentile(pm, 99)), aspect='auto', cmap='magma', origin='upper',
                extent=[np.degrees(th[0]), np.degrees(th[-1]), 1.3, 0.7])
-ax.plot(np.degrees(th), 0.7 + 0.6 * greedy / (R.shape[1] - 1), 'y.-', lw=1, ms=4, label=L['greedy'])
-ax.plot(np.degrees(th), 0.7 + 0.6 * dp / (R.shape[1] - 1), 'c-', lw=2.5, label=L['dp'])
-ax.axhline(1.0, color='w', ls='--', lw=1, label=L['r0'])
-ax.set_xlabel(L['xl']); ax.set_ylabel(L['yl'])
-ax.legend(loc='lower right', fontsize=9, framealpha=0.8)
-ax.set_title(L['t2'], fontsize=10)
-fig.colorbar(im, ax=ax, fraction=0.02, label='score')
-
-for k, (path, col, name) in enumerate([(greedy, 'y', 'Greedy'), (dp, 'c', 'Dynamic programming' if EN else 'DP / Viterbi')]):
-    ax = fig.add_subplot(gsp[1, k]); ax.imshow(g0, cmap='gray'); ax.axhline(yc, color='c', lw=0.6, alpha=0.5)
-    px, py = xy(R, th, xc, yc, path); ax.plot(px, py, color=col, lw=1.6)
-    crop(ax); ax.axis('off')
-    ax.set_title(L['t3'].format('cd'[k] if EN else 3 + k, name, depth_mm(px, py, line, w), r.D_ref), fontsize=10)
-
-ax = fig.add_subplot(gsp[1, 2]); ax.axis('off')
-ax.text(0, 0.95, L['box'], va='top', family='monospace', fontsize=10)
-fig.suptitle(L['sup'].format(r.id + r.sec), fontsize=13)
-fig.tight_layout(); fig.savefig(out, dpi=110)
+ax.plot(np.degrees(th), 0.7 + 0.6 * greedy / (R.shape[1] - 1), 'y.-', lw=1, ms=4, label='greedy (best per ray)' if EN else L['greedy'])
+ax.plot(np.degrees(th), 0.7 + 0.6 * dp / (R.shape[1] - 1), 'c-', lw=2.5, label='dynamic programming' if EN else L['dp'])
+ax.axhline(1.0, color='w', ls='--', lw=1.2, label='superellipse $r_0$' if EN else L['r0'])
+ax.set_xlabel('ray angle (degree), left edge of the bead to right edge' if EN else L['xl']); ax.set_ylabel('radius / $r_0$')
+ax.legend(loc='upper center', bbox_to_anchor=(.5, -.24), ncol=3, fontsize=9.5, facecolor='#555', labelcolor='w', framealpha=1)
+ax.set_title('(d) Unrolled score map (bright = fusion-line evidence)' if EN else L['t2'], fontsize=10.5)
+fig.colorbar(im, ax=ax, fraction=0.025, pad=.01, label='score')
+fig.tight_layout(h_pad=.8); fig.savefig(out)

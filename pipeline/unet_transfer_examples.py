@@ -7,8 +7,7 @@ import numpy as np, pandas as pd, cv2, torch
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from unet_seg import UNet, load_img, train, predict, SZ
 from unet_transfer import bright_mount
-import matplotlib; matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from figstyle import plt, FULL, fill, crop_box, mask_legend
 
 tif_dir, seg_dir, src_pt, out = sys.argv[1:5]
 torch.manual_seed(0)
@@ -32,28 +31,24 @@ sc = UNet(); train(sc, X, Y, keys, 80, lr=1e-3, log=False)
 def iou(m, y, c):
     return ((m == c) & (y == c)).sum() / max(((m == c) | (y == c)).sum(), 1)
 
-def show(ax, g, m):
-    rgb = np.stack([g] * 3, -1) * 0.6
-    rgb[m == 1] = rgb[m == 1] * 0.3 + np.array([0.2, 0.8, 0.2]) * 0.7
-    rgb[m == 2] = rgb[m == 2] * 0.3 + np.array([0.9, 0.2, 0.2]) * 0.7
-    ax.imshow(np.clip(rgb, 0, 1)); ax.axis('off')
-
 show_keys = te.key.values[np.linspace(0, len(te) - 1, 4).astype(int)]
-nets = [('source only (k = 0)', net_src), ('fine-tuned (k = 5)', ft), ('from scratch (k = 5)', sc)]
-fig, axs = plt.subplots(len(show_keys), 5, figsize=(14, 2.55 * len(show_keys)))
+nets = [('source only\n(k = 0)', net_src), ('fine-tuned\n(k = 5)', ft), ('from scratch\n(k = 5)', sc)]
+fig, axs = plt.subplots(len(show_keys), 5, figsize=(FULL, 1.3 * len(show_keys) + 0.7))
 for i, k in enumerate(show_keys):
     g = X[k]; g = (g - g.min()) / (g.max() - g.min())
-    axs[i, 0].imshow(g, cmap='gray'); axs[i, 0].axis('off')
-    axs[i, 0].set_ylabel(k[-5:])
-    axs[i, 0].text(4, 20, k[-5:], color='w', fontsize=9, bbox=dict(fc='k', alpha=0.5, lw=0))
-    show(axs[i, 1], g, Y[k])
-    for j, (name, net) in enumerate(nets):
-        m = predict(net, X[k])
-        show(axs[i, 2 + j], g, m)
-        axs[i, 2 + j].text(0.5, -0.04, f'IoU clad {iou(m, Y[k], 1):.2f}, remelt {iou(m, Y[k], 2):.2f}',
-                           transform=axs[i, 2 + j].transAxes, ha='center', va='top', fontsize=8.5)
-for j, t in enumerate(['input (bright mount, held-out track)', 'label (accepted rule-based mask)'] + [n for n, _ in nets]):
+    preds = [predict(net, X[k]) for _, net in nets]
+    box = crop_box([Y[k]] + preds, g.shape, pad=.15)
+    fill(axs[i, 0], g, np.zeros_like(Y[k]), box)
+    axs[i, 0].axis('on'); axs[i, 0].set_xticks([]); axs[i, 0].set_yticks([]); axs[i, 0].set_ylabel(k[-5:], fontsize=10.5)
+    [s_.set_visible(False) for s_ in axs[i, 0].spines.values()]
+    fill(axs[i, 1], g, Y[k], box)
+    for j, m in enumerate(preds):
+        fill(axs[i, 2 + j], g, m, box)
+        axs[i, 2 + j].text(0.5, -0.03, f'IoU {iou(m, Y[k], 1):.2f} / {iou(m, Y[k], 2):.2f}',
+                           transform=axs[i, 2 + j].transAxes, ha='center', va='top', fontsize=9)
+for j, t in enumerate(['input\n(held-out track)', 'label\n(rule-based)'] + [n for n, _ in nets]):
     axs[0, j].set_title(t, fontsize=10)
-fig.tight_layout(h_pad=1.6)
-fig.savefig(out, dpi=120)
+fig.tight_layout(h_pad=1.3, w_pad=.3)
+mask_legend(fig, filled=True, loc='lower center', bbox_to_anchor=(.5, -.06))
+fig.savefig(out)
 print('train keys', list(keys), 'shown', list(show_keys))
